@@ -1132,7 +1132,14 @@ class Library(object):
         else:
             raise TemplateSyntaxError("Invalid arguments provided to simple_tag")
 
-    def assignment_tag(self, func=None, takes_context=None, name=None):
+    def assignment_tag(self, func=None, takes_context=None, name=None,
+                       default_name=None, optional_assignment=False):
+
+        if default_name is not None and optional_assignment:
+            raise ValueError(
+                "Can not use both 'default_name' and 'optional_assignment' in "
+                "an assignment_tag")
+
         def dec(func):
             params, varargs, varkw, defaults = getargspec(func)
 
@@ -1143,20 +1150,34 @@ class Library(object):
 
                 def render(self, context):
                     resolved_args, resolved_kwargs = self.get_resolved_arguments(context)
-                    context[self.target_var] = func(*resolved_args, **resolved_kwargs)
-                    return ''
+                    value = func(*resolved_args, **resolved_kwargs)
+
+                    if self.target_var:
+                        context[self.target_var] = value
+                        return ''
+                    else:
+                        return value
 
             function_name = (name or
                 getattr(func, '_decorated_function', func).__name__)
 
             def compile_func(parser, token):
                 bits = token.split_contents()[1:]
+
                 if len(bits) < 2 or bits[-2] != 'as':
-                    raise TemplateSyntaxError(
-                        "'%s' tag takes at least 2 arguments and the "
-                        "second last argument must be 'as'" % function_name)
-                target_var = bits[-1]
-                bits = bits[:-2]
+                    # No name was supplied for the variable
+                    if optional_assignment:
+                        target_var = None
+                    elif default_name is not None:
+                        target_var = default_name
+                    else:
+                        raise TemplateSyntaxError(
+                            "'%s' tag takes at least 2 arguments and the "
+                            "second last argument must be 'as'" % function_name)
+                else:
+                    target_var = bits[-1]
+                    bits = bits[:-2]
+
                 args, kwargs = parse_bits(parser, bits, params,
                     varargs, varkw, defaults, takes_context, function_name)
                 return AssignmentNode(takes_context, args, kwargs, target_var)
