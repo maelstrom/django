@@ -355,6 +355,27 @@ class CustomTagTests(TestCase):
             "'assignment_unlimited_args_kwargs' received multiple values for keyword argument 'eggs'",
             template.Template, '{% load custom %}{% assignment_unlimited_args_kwargs 37 eggs="scrambled" eggs="scrambled" as var %}The result is: {{ var }}')
 
+        c = template.Context({'value': 42})
+        t = template.Template('{% load custom %}{% assignment_default_name_missing %}The result is: {{ var }}')
+        self.assertEqual(t.render(c), 'The result is: assignment_default_name_missing - Expected result')
+
+        c = template.Context({'value': 42})
+        t = template.Template('{% load custom %}{% assignment_default_name_not_default as not_default %}The result is: {{ not_default }}')
+        self.assertEqual(t.render(c), 'The result is: assignment_default_name_not_default - Expected result')
+
+        c = template.Context({'value': 42})
+        t = template.Template('{% load custom %}{% assignment_default_name_not_default_2 as not_default %}The result is: {{ var }}')
+        self.assertEqual(t.render(c), 'The result is: ')
+
+        c = template.Context({'value': 42})
+        t = template.Template('{% load custom %}The result is: {% assignment_optional_name_missing %}')
+        self.assertEqual(t.render(c), 'The result is: assignment_optional_name_missing - Expected result')
+
+        c = template.Context({'value': 42})
+        t = template.Template('{% load custom %}{% assignment_optional_name_present as var %}The result is: {{ var }}')
+        self.assertEqual(t.render(c), 'The result is: assignment_optional_name_present - Expected result')
+
+
     def test_assignment_tag_registration(self):
         # Test that the decorators preserve the decorated function's docstring, name and attributes.
         self.verify_tag(custom.assignment_no_params, 'assignment_no_params')

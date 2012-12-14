@@ -304,3 +304,23 @@ def assignment_tag_without_context_parameter(arg):
     """Expected assignment_tag_without_context_parameter __doc__"""
     return "Expected result"
 assignment_tag_without_context_parameter.anything = "Expected assignment_tag_without_context_parameter __dict__"
+
+@register.assignment_tag(optional_assignment=True)
+def assignment_optional_name_missing():
+    return "assignment_optional_name_missing - Expected result"
+
+@register.assignment_tag(optional_assignment=True)
+def assignment_optional_name_present():
+    return "assignment_optional_name_present - Expected result"
+
+@register.assignment_tag(default_name="var")
+def assignment_default_name_missing():
+    return "assignment_default_name_missing - Expected result"
+
+@register.assignment_tag(default_name="var")
+def assignment_default_name_not_default():
+    return "assignment_default_name_not_default - Expected result"
+
+@register.assignment_tag(default_name="var")
+def assignment_default_name_not_default_2():
+    return "assignment_default_name_not_default_2 - Expected result"
