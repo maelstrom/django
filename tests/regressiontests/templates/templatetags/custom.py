@@ -304,3 +304,11 @@ def assignment_tag_without_context_parameter(arg):
     """Expected assignment_tag_without_context_parameter __doc__"""
     return "Expected result"
 assignment_tag_without_context_parameter.anything = "Expected assignment_tag_without_context_parameter __dict__"
+
+@register.simple_tag(can_assign=True)
+def simple_can_assign():
+    return "simple_can_assign - Expected result"
+
+@register.simple_tag(can_assign=True, default_name="var")
+def simple_can_assign_default_name():
+    return "simple_can_assign_default_name - Expected result"

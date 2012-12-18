@@ -1103,22 +1103,44 @@ class Library(object):
         name = getattr(func, "_decorated_function", func).__name__
         return self.filter(name, func, **flags)
 
-    def simple_tag(self, func=None, takes_context=None, name=None):
+    def simple_tag(self, func=None, takes_context=None, name=None,
+            can_assign=False, default_name=None):
         def dec(func):
             params, varargs, varkw, defaults = getargspec(func)
 
             class SimpleNode(TagHelperNode):
+                def __init__(self, takes_context, args, kwargs, target_var):
+                    super(SimpleNode, self).__init__(takes_context, args, kwargs)
+                    self.target_var = target_var
 
                 def render(self, context):
                     resolved_args, resolved_kwargs = self.get_resolved_arguments(context)
-                    return func(*resolved_args, **resolved_kwargs)
+                    value = func(*resolved_args, **resolved_kwargs)
+
+                    if self.target_var:
+                        context[self.target_var] = value
+                        return ''
+                    else:
+                        return value
 
             function_name = (name or
                 getattr(func, '_decorated_function', func).__name__)
-            compile_func = partial(generic_tag_compiler,
-                params=params, varargs=varargs, varkw=varkw,
-                defaults=defaults, name=function_name,
-                takes_context=takes_context, node_class=SimpleNode)
+
+            def compile_func(parser, token):
+                bits = token.split_contents()[1:]
+                target_var = None
+
+                if can_assign:
+                    target_var = default_name
+
+                    if len(bits) >= 2 and bits[-2] == 'as':
+                        target_var = bits[-1]
+                        bits = bits[:-2]
+
+                args, kwargs = parse_bits(parser, bits, params,
+                    varargs, varkw, defaults, takes_context, function_name)
+                return SimpleNode(takes_context, args, kwargs, target_var)
+
             compile_func.__doc__ = func.__doc__
             self.tag(function_name, compile_func)
             return func

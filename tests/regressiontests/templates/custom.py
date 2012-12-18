@@ -90,6 +90,24 @@ class CustomTagTests(TestCase):
             "'simple_unlimited_args_kwargs' received multiple values for keyword argument 'eggs'",
             template.Template, '{% load custom %}{% simple_unlimited_args_kwargs 37 eggs="scrambled" eggs="scrambled" %}')
 
+        t = template.Template('{% load custom %}{% simple_can_assign %}')
+        self.assertEqual(t.render(c), 'simple_can_assign - Expected result')
+
+        t = template.Template('{% load custom %}{% simple_can_assign as foo %}Output: {{ foo }}')
+        self.assertEqual(t.render(c), 'Output: simple_can_assign - Expected result')
+
+        c = template.Context({'value': 42})
+        t = template.Template('{% load custom %}{% simple_can_assign_default_name %}Output: {{ var }}')
+        self.assertEqual(t.render(c), 'Output: simple_can_assign_default_name - Expected result')
+
+        c = template.Context({'value': 42})
+        t = template.Template('{% load custom %}{% simple_can_assign_default_name as foo %}Output: {{ foo }}')
+        self.assertEqual(t.render(c), 'Output: simple_can_assign_default_name - Expected result')
+
+        c = template.Context({'value': 42})
+        t = template.Template('{% load custom %}{% simple_can_assign_default_name as foo %}Output: {{ var }}')
+        self.assertEqual(t.render(c), 'Output: ')
+
     def test_simple_tag_registration(self):
         # Test that the decorators preserve the decorated function's docstring, name and attributes.
         self.verify_tag(custom.no_params, 'no_params')
